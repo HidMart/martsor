@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>martsor Documentation</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background: #000;
+            color: #fff;
+            font-family: Tahoma, Arial, sans-serif;
+            line-height: 1.9;
+        }
+
+        header {
+            padding: 65px 20px;
+            border-bottom: 1px solid #222;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 46px;
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            font-size: 28px;
+            margin-bottom: 22px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #222;
+        }
+
+        h3 {
+            margin-top: 30px;
+            color: #ddd;
+            font-size: 19px;
+        }
+
+        p {
+            color: #bbb;
+        }
+
+        .subtitle {
+            color: #aaa;
+            margin-top: 8px;
+            font-size: 17px;
+        }
+
+        .version {
+            display: inline-block;
+            margin-top: 18px;
+            padding: 5px 13px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #ccc;
+            font-size: 13px;
+        }
+
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(0,0,0,.96);
+            border-bottom: 1px solid #222;
+            padding: 14px 20px;
+        }
+
+        .nav-content {
+            max-width: 1100px;
+            margin: auto;
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        nav a {
+            color: #aaa;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        nav a:hover {
+            color: #fff;
+        }
+
+        section {
+            margin-bottom: 65px;
+        }
+
+        ul {
+            padding-right: 25px;
+        }
+
+        li {
+            color: #ccc;
+            margin: 7px 0;
+        }
+
+        .notice,
+        .warning,
+        .api-box {
+            background: #080808;
+            border: 1px solid #292929;
+            border-radius: 10px;
+            padding: 22px;
+            margin: 25px 0;
+        }
+
+        .warning {
+            border-right: 3px solid #666;
+            color: #bbb;
+        }
+
+        pre {
+            direction: ltr;
+            text-align: left;
+            background: #090909;
+            border: 1px solid #252525;
+            border-radius: 9px;
+            padding: 18px;
+            overflow-x: auto;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #e6e6e6;
+        }
+
+        code {
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 5px 9px;
+            margin: 4px;
+            border: 1px solid #292929;
+            border-radius: 5px;
+            background: #080808;
+            color: #ccc;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+        }
+
+        .api-title {
+            color: #fff;
+            font-family: Consolas, monospace;
+            font-size: 17px;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            border-top: 1px solid #222;
+            padding: 35px 20px;
+            text-align: center;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 34px;
+            }
+
+            h2 {
+                font-size: 23px;
+            }
+
+            pre {
+                font-size: 12px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="container">
+
+        <h1>martsor</h1>
+
+        <div class="subtitle">
+            Python Library for Soroush Plus Bots
+        </div>
+
+        <div class="version">
+            Version 0.2.0
+        </div>
+
+    </div>
+</header>
+
+<nav>
+    <div class="nav-content">
+        <a href="#about">معرفی</a>
+        <a href="#features">قابلیت‌ها</a>
+        <a href="#install">نصب</a>
+        <a href="#quickstart">شروع سریع</a>
+        <a href="#bot">Bot</a>
+        <a href="#handlers">Handlers</a>
+        <a href="#messages">پیام‌ها</a>
+        <a href="#keyboard">Keyboard</a>
+        <a href="#sending">ارسال</a>
+        <a href="#updates">Updates</a>
+        <a href="#errors">خطاها</a>
+        <a href="#api">API</a>
+    </div>
+</nav>
+
+<main class="container">
+
+<!-- ABOUT -->
+
+<section id="about">
+
+    <div class="notice">
+
+        <strong>martsor Documentation 0.2.0</strong>
+
+        <p>
+            مستندات رسمی کتابخانه martsor برای ساخت
+            ربات‌های Python در پیام‌رسان سروش‌پلاس.
+        </p>
+
+        <p>
+            نسخه فعلی:
+            <strong>0.2.0</strong>
+        </p>
+
+        <p>
+            martsor یک کتابخانه مستقل برای کار با
+            Soroush Plus Bot API است.
+        </p>
+
+    </div>
+
+</section>
+
+
+<!-- FEATURES -->
+
+<section id="features">
+
+<h2>قابلیت‌ها</h2>
+
+<ul>
+    <li>ساخت Bot</li>
+    <li>اتصال به Soroush Plus Bot API</li>
+    <li>دریافت اطلاعات Bot</li>
+    <li>دریافت پیام‌ها</li>
+    <li>دریافت Updates</li>
+    <li>دریافت Command</li>
+    <li>دریافت Callback Query</li>
+
+    <li>ارسال پیام</li>
+    <li>ارسال عکس</li>
+    <li>ارسال Document</li>
+    <li>ارسال Video</li>
+    <li>ارسال Audio</li>
+    <li>ارسال Voice</li>
+    <li>ارسال Location</li>
+    <li>ارسال Sticker</li>
+
+    <li>ویرایش پیام</li>
+    <li>حذف پیام</li>
+    <li>Forward پیام</li>
+    <li>Copy پیام</li>
+
+    <li>Inline Keyboard</li>
+    <li>Inline Button</li>
+    <li>Callback Button</li>
+    <li>URL Button</li>
+    <li>Reply Keyboard</li>
+    <li>Force Reply</li>
+    <li>Remove Keyboard</li>
+
+    <li>مدیریت خطاها</li>
+    <li>پشتیبانی از Retry در خطای 429</li>
+    <li>Webhook</li>
+    <li>Long Polling</li>
+</ul>
+
+</section>
+
+
+<!-- INSTALL -->
+
+<section id="install">
+
+<h2>نصب</h2>
+
+<p>آخرین نسخه martsor:</p>
+
+<pre><code>pip install martsor</code></pre>
+
+<p>نصب نسخه 0.2.0:</p>
+
+<pre><code>pip install martsor==0.2.0</code></pre>
+
+<p>
+martsor برای Python 3.8 و بالاتر طراحی شده است.
+</p>
+
+</section>
+
+
+<!-- QUICK START -->
+
+<section id="quickstart">
+
+<h2>شروع سریع</h2>
+
+<pre><code>import martsor
+
+bot = martsor.Bot("TOKEN")
+
+@bot.on_command("start")
+async def start(update):
+
+    await bot.send_message(
+        update.chat_id,
+        "سلام! ربات فعال است."
+    )
+
+bot.run()</code></pre>
+
+<div class="warning">
+
+<strong>نکته امنیتی</strong>
+
+<p>
+Token ربات خود را داخل GitHub یا کد عمومی قرار ندهید.
+برای پروژه‌های واقعی از متغیر محیطی استفاده کنید.
+</p>
+
+</div>
+
+</section>
+
+
+<!-- BOT -->
+
+<section id="bot">
+
+<h2>Bot</h2>
+
+<h3>ساخت Bot</h3>
+
+<pre><code>import martsor
+
+bot = martsor.Bot("TOKEN")</code></pre>
+
+<h3>دریافت اطلاعات Bot</h3>
+
+<pre><code>me = bot.get_me()
+
+print(me)</code></pre>
+
+<h3>اجرای Bot</h3>
+
+<pre><code>bot.run()</code></pre>
+
+</section>
+
+
+<!-- HANDLERS -->
+
+<section id="handlers">
+
+<h2>Handlers</h2>
+
+<h3>Command Handler</h3>
+
+<pre><code>@bot.on_command("start")
+async def start(update):
+
+    await bot.send_message(
+        update.chat_id,
+        "سلام!"
+    )</code></pre>
+
+<h3>Message Handler</h3>
+
+<pre><code>@bot.on_message
+async def message_handler(update):
+
+    print(update.text)</code></pre>
+
+<h3>Callback Handler</h3>
+
+<pre><code>@bot.on_callback
+async def callback(update):
+
+    print(update.data)</code></pre>
+
+<h3>Edited Message</h3>
+
+<pre><code>@bot.on_edited_message
+async def edited(update):
+
+    print(update.text)</code></pre>
+
+</section>
+
+
+<!-- MESSAGES -->
+
+<section id="messages">
+
+<h2>Message</h2>
+
+<h3>اطلاعات پیام</h3>
+
+<pre><code>update.message
+update.text
+update.chat_id
+update.message_id</code></pre>
+
+<h3>Callback</h3>
+
+<pre><code>update.data
+update.callback_query_id</code></pre>
+
+<h3>ارسال پاسخ</h3>
+
+<pre><code>await bot.send_message(
+    update.chat_id,
+    "پیام دریافت شد."
+)</code></pre>
+
+</section>
+
+
+<!-- KEYBOARD -->
+
+<section id="keyboard">
+
+<h2>Keyboard</h2>
+
+<p>
+martsor از Inline Keyboard و Reply Keyboard
+پشتیبانی می‌کند.
+</p>
+
+<h3>Inline Keyboard</h3>
+
+<pre><code>import martsor
+
+keyboard = martsor.InlineKeyboard()
+
+keyboard.button(
+    "گزینه اول",
+    callback_data="option_1"
+)
+
+keyboard.button(
+    "گزینه دوم",
+    callback_data="option_2"
+)
+
+await bot.send_message(
+    chat_id,
+    "یک گزینه انتخاب کنید:",
+    reply_markup=keyboard
+)</code></pre>
+
+<h3>URL Button</h3>
+
+<pre><code>keyboard = martsor.InlineKeyboard()
+
+keyboard.url(
+    "وب‌سایت",
+    "https://example.com"
+)</code></pre>
+
+<h3>Reply Keyboard</h3>
+
+<pre><code>keyboard = martsor.ReplyKeyboard([
+    ["گزینه اول", "گزینه دوم"],
+    ["گزینه سوم"]
+])
+
+await bot.send_message(
+    chat_id,
+    "انتخاب کنید:",
+    reply_markup=keyboard
+)</code></pre>
+
+<h3>حذف Keyboard</h3>
+
+<pre><code>keyboard = martsor.ReplyKeyboardRemove()
+
+await bot.send_message(
+    chat_id,
+    "کیبورد حذف شد.",
+    reply_markup=keyboard
+)</code></pre>
+
+</section>
+
+
+<!-- SENDING -->
+
+<section id="sending">
+
+<h2>متدهای ارسال</h2>
+
+<h3>send_message()</h3>
+
+<pre><code>await bot.send_message(
+    chat_id,
+    "سلام!"
+)</code></pre>
+
+<h3>send_photo()</h3>
+
+<pre><code>await bot.send_photo(
+    chat_id,
+    photo,
+    caption="عکس"
+)</code></pre>
+
+<h3>send_document()</h3>
+
+<pre><code>await bot.send_document(
+    chat_id,
+    document,
+    caption="فایل"
+)</code></pre>
+
+<h3>send_video()</h3>
+
+<pre><code>await bot.send_video(
+    chat_id,
+    video,
+    caption="ویدیو"
+)</code></pre>
+
+<h3>send_audio()</h3>
+
+<pre><code>await bot.send_audio(
+    chat_id,
+    audio,
+    caption="Audio"
+)</code></pre>
+
+<h3>send_voice()</h3>
+
+<pre><code>await bot.send_voice(
+    chat_id,
+    voice
+)</code></pre>
+
+<h3>send_location()</h3>
+
+<pre><code>await bot.send_location(
+    chat_id,
+    latitude,
+    longitude
+)</code></pre>
+
+</section>
+
+
+<!-- UPDATES -->
+
+<section id="updates">
+
+<h2>Updates</h2>
+
+<h3>دریافت Updates</h3>
+
+<pre><code>updates = bot.get_updates()
+
+for update in updates:
+    print(update)</code></pre>
+
+<h3>Long Polling</h3>
+
+<pre><code>bot.run()</code></pre>
+
+<h3>Webhook</h3>
+
+<pre><code>bot.set_webhook(
+    "https://example.com/webhook"
+)</code></pre>
+
+</section>
+
+
+<!-- MANAGEMENT -->
+
+<section>
+
+<h2>مدیریت پیام</h2>
+
+<h3>ویرایش پیام</h3>
+
+<pre><code>bot.edit_message_text(
+    chat_id,
+    message_id,
+    "متن جدید"
+)</code></pre>
+
+<h3>حذف پیام</h3>
+
+<pre><code>bot.delete_message(
+    chat_id,
+    message_id
+)</code></pre>
+
+<h3>Forward</h3>
+
+<pre><code>bot.forward_message(
+    chat_id,
+    from_chat_id,
+    message_id
+)</code></pre>
+
+<h3>Copy</h3>
+
+<pre><code>bot.copy_message(
+    chat_id,
+    from_chat_id,
+    message_id
+)</code></pre>
+
+</section>
+
+
+<!-- ERRORS -->
+
+<section id="errors">
+
+<h2>مدیریت خطاها</h2>
+
+<p>
+خطاهای API توسط استثنای APIError مدیریت می‌شوند.
+</p>
+
+<pre><code>import martsor
+
+try:
+
+    bot.send_message(
+        chat_id,
+        "Hello"
+    )
+
+except martsor.APIError as error:
+
+    print(error)</code></pre>
+
+<h3>Retry</h3>
+
+<p>
+در صورت دریافت خطای 429، کتابخانه می‌تواند
+با توجه به مقدار retry_after درخواست را دوباره تلاش کند.
+</p>
+
+</section>
+
+
+<!-- API -->
+
+<section id="api">
+
+<h2>فهرست API</h2>
+
+<div class="api-box">
+
+<div class="api-title">
+Bot
+</div>
+
+<span class="method">Bot()</span>
+<span class="method">run()</span>
+<span class="method">stop()</span>
+<span class="method">get_me()</span>
+<span class="method">get_updates()</span>
+
+</div>
+
+
+<div class="api-box">
+
+<div class="api-title">
+Handlers
+</div>
+
+<span class="method">on_command()</span>
+<span class="method">on_message()</span>
+<span class="method">on_callback()</span>
+<span class="method">on_edited_message()</span>
+
+</div>
+
+
+<div class="api-box">
+
+<div class="api-title">
+Sending
+</div>
+
+<span class="method">send_message()</span>
+<span class="method">send_photo()</span>
+<span class="method">send_document()</span>
+<span class="method">send_video()</span>
+<span class="method">send_audio()</span>
+<span class="method">send_voice()</span>
+<span class="method">send_location()</span>
+<span class="method">send_sticker()</span>
+
+</div>
+
+
+<div class="api-box">
+
+<div class="api-title">
+Management
+</div>
+
+<span class="method">edit_message_text()</span>
+<span class="method">edit_message_caption()</span>
+<span class="method">delete_message()</span>
+<span class="method">forward_message()</span>
+<span class="method">copy_message()</span>
+
+</div>
+
+
+<div class="api-box">
+
+<div class="api-title">
+Keyboard
+</div>
+
+<span class="method">Button</span>
+<span class="method">InlineKeyboard</span>
+<span class="method">ReplyKeyboard</span>
+<span class="method">ReplyKeyboardRemove</span>
+<span class="method">ForceReply</span>
+
+</div>
+
+</section>
+
+
+<!-- VERSION -->
+
+<section>
+
+<h2>نسخه</h2>
+
+<p>
+martsor 0.2.0
+</p>
+
+<p>
+این پروژه متن‌باز و در حال توسعه است.
+قابلیت‌های جدید در نسخه‌های آینده اضافه خواهند شد.
+</p>
+
+</section>
+
+
+<!-- SUPPORT -->
+
+<section>
+
+<h2>پشتیبانی</h2>
+
+<div class="notice">
+
+<p>
+برای گزارش خطا، پیشنهاد قابلیت جدید یا دریافت
+اطلاعات بیشتر، از کانال رسمی پروژه استفاده کنید.
+</p>
+
+<p>
+<strong>@martsor</strong>
+</p>
+
+</div>
+
+</section>
+
+</main>
+
+<footer>
+martsor 0.2.0 — Python Library for Soroush Plus Bots
+</footer>
+
+</body>
+</html>
