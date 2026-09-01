@@ -1,10 +1,44 @@
 # martsor
 
-Python library for building Soroush Plus bots.
+Python library for building bots with the Soroush Plus Bot API.
 
-## Version
+Version: 0.2.0
 
-0.1.0
+
+## Features
+
+- Soroush Plus Bot API
+- Long polling
+- getUpdates
+- sendMessage
+- sendPhoto
+- sendDocument
+- sendVideo
+- sendAudio
+- sendVoice
+- sendAnimation
+- sendSticker
+- sendLocation
+- sendContact
+- sendMediaGroup
+- forwardMessage
+- copyMessage
+- getFile
+- getChat
+- deleteMessage
+- editMessageText
+- editMessageCaption
+- editMessageMedia
+- editMessageReplyMarkup
+- InlineKeyboard
+- Callback Query
+- Reply Keyboard
+- Force Reply
+- Bot commands
+- Webhook API methods
+- MarkdownV2 / HTML parse mode support
+- No external dependencies
+
 
 ## Installation
 
