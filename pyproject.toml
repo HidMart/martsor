@@ -1,18 +1,25 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = [
+    "setuptools>=61.0",
+    "wheel"
+]
 build-backend = "setuptools.build_meta"
 
 
 [project]
 name = "martsor"
-version = "0.2.0"
-description = "Python library for building Soroush Plus bots."
+version = "0.3.0"
+
+description = "Python library for building Soroush Plus bots and user clients."
+
 readme = "README.md"
+
 requires-python = ">=3.8"
-license = {text = "MIT"}
+
+license = { text = "MIT" }
 
 authors = [
-    {name = "HidMart"}
+    { name = "HidMart" }
 ]
 
 keywords = [
@@ -20,29 +27,42 @@ keywords = [
     "soroushplus",
     "splus",
     "bot",
-    "telegram-like",
+    "selfbot",
+    "userbot",
     "python"
 ]
 
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent"
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13"
 ]
 
 dependencies = []
 
 
+[project.optional-dependencies]
+self = [
+    "SPlusthon>=1.1.4"
+]
+
+
 [project.urls]
 Homepage = "https://github.com/HidMart/martsor"
 Repository = "https://github.com/HidMart/martsor"
-
-
-[tool.setuptools]
-include-package-data = true
+Issues = "https://github.com/HidMart/martsor/issues"
 
 
 [tool.setuptools.packages.find]
-include = ["martsor*"]
+include = [
+    "martsor",
+    "martsor.*"
+]
