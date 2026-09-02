@@ -14,7 +14,7 @@ class SelfClient:
     Client for Soroush Plus user accounts.
 
     Requires:
-        pip install "martsor[self]"
+        pip install SPlusthon
     """
 
     def __init__(
@@ -31,7 +31,7 @@ class SelfClient:
             raise ImportError(
                 "SelfClient requires SPlusthon.\n"
                 "Install it with:\n"
-                'pip install "martsor[self]"'
+                "pip install SPlusthon"
             ) from exc
 
         self._events = events
@@ -39,7 +39,6 @@ class SelfClient:
 
         if session is None:
             session = StringSession()
-
         elif isinstance(session, str):
             session = StringSession(session)
 
@@ -68,40 +67,23 @@ class SelfClient:
     # =========================================================
 
     async def _call(self, function, *args, **kwargs):
-        """
-        Call sync or async functions safely.
-        """
+        """Call sync or async functions safely."""
 
-        result = function(
-            *args,
-            **kwargs
-        )
+        result = function(*args, **kwargs)
 
         if inspect.isawaitable(result):
             return await result
 
         return result
 
-    async def _call_method(
-        self,
-        name,
-        *args,
-        **kwargs
-    ):
-        """
-        Call a method from the underlying SPlusthon client.
-        """
+    async def _call_method(self, name, *args, **kwargs):
+        """Call a method from the SPlusthon client."""
 
-        method = getattr(
-            self.client,
-            name,
-            None
-        )
+        method = getattr(self.client, name, None)
 
         if method is None:
             raise AttributeError(
-                "SPlusthon does not provide method: "
-                + name
+                "SPlusthon does not provide method: " + name
             )
 
         return await self._call(
@@ -125,15 +107,7 @@ class SelfClient:
     # =========================================================
 
     def on_message(self, function=None):
-        """
-        Register a message handler.
-
-        Example:
-
-            @client.on_message
-            async def handler(event):
-                print(event.text)
-        """
+        """Register a message handler."""
 
         def decorator(handler):
             self._message_handlers.append(handler)
@@ -145,15 +119,7 @@ class SelfClient:
         return decorator
 
     def on_command(self, command):
-        """
-        Register a command handler.
-
-        Example:
-
-            @client.on_command("start")
-            async def start(event):
-                await event.respond("سلام")
-        """
+        """Register a command handler."""
 
         command = command.lstrip("/").lower()
 
@@ -166,9 +132,7 @@ class SelfClient:
         return decorator
 
     def on_callback(self, function=None):
-        """
-        Register a callback handler.
-        """
+        """Register a callback handler."""
 
         def decorator(handler):
             self._callback_handlers.append(handler)
@@ -183,11 +147,7 @@ class SelfClient:
     # Dispatch
     # =========================================================
 
-    async def _run_handler(
-        self,
-        handler,
-        event
-    ):
+    async def _run_handler(self, handler, event):
         result = handler(event)
 
         if inspect.isawaitable(result):
@@ -196,21 +156,23 @@ class SelfClient:
         return result
 
     async def _dispatch_message(self, event):
-        text = getattr(
-            event,
-            "text",
-            None
-        )
+        text = getattr(event, "text", None)
 
         if text is None:
             text = ""
 
         # Normal messages
         for handler in self._message_handlers:
-            await self._run_handler(
-                handler,
-                event
-            )
+            try:
+                await self._run_handler(
+                    handler,
+                    event
+                )
+            except Exception as exc:
+                print(
+                    "[martsor] Message handler error:",
+                    exc
+                )
 
         # Commands
         if text.startswith("/"):
@@ -224,26 +186,36 @@ class SelfClient:
 
                 for registered, handler in self._command_handlers:
                     if registered == command:
-                        await self._run_handler(
-                            handler,
-                            event
-                        )
+                        try:
+                            await self._run_handler(
+                                handler,
+                                event
+                            )
+                        except Exception as exc:
+                            print(
+                                "[martsor] Command handler error:",
+                                exc
+                            )
 
     async def _dispatch_callback(self, event):
         for handler in self._callback_handlers:
-            await self._run_handler(
-                handler,
-                event
-            )
+            try:
+                await self._run_handler(
+                    handler,
+                    event
+                )
+            except Exception as exc:
+                print(
+                    "[martsor] Callback handler error:",
+                    exc
+                )
 
     # =========================================================
     # Events
     # =========================================================
 
     def _install_events(self):
-        """
-        Connect martsor handlers to SPlusthon.
-        """
+        """Connect martsor handlers to SPlusthon."""
 
         if self._events_installed:
             return
@@ -251,6 +223,19 @@ class SelfClient:
         @self.client.on(self._events.NewMessage)
         async def _message_event(event):
             await self._dispatch_message(event)
+
+        # CallbackQuery may not be available in every version.
+        callback_event = getattr(
+            self._events,
+            "CallbackQuery",
+            None
+        )
+
+        if callback_event is not None:
+
+            @self.client.on(callback_event)
+            async def _callback_event(event):
+                await self._dispatch_callback(event)
 
         self._events_installed = True
 
@@ -262,8 +247,8 @@ class SelfClient:
         """
         Start the Self Client.
 
-        On the first login, SPlusthon may ask
-        for authentication information.
+        SPlusthon may ask for authentication
+        information on first login.
         """
 
         self._install_events()
@@ -281,9 +266,7 @@ class SelfClient:
         return result
 
     async def run_until_disconnected(self):
-        """
-        Keep the client running.
-        """
+        """Keep the client running."""
 
         result = self.client.run_until_disconnected()
 
@@ -293,9 +276,7 @@ class SelfClient:
         return result
 
     async def run(self, *args, **kwargs):
-        """
-        Start and run the client.
-        """
+        """Start and run the client."""
 
         await self.start(
             *args,
@@ -305,9 +286,7 @@ class SelfClient:
         return await self.run_until_disconnected()
 
     async def disconnect(self):
-        """
-        Disconnect the client.
-        """
+        """Disconnect the client."""
 
         method = getattr(
             self.client,
@@ -325,9 +304,7 @@ class SelfClient:
     # =========================================================
 
     async def get_me(self):
-        """
-        Get current account information.
-        """
+        """Get current account information."""
 
         return await self._call_method(
             "get_me"
@@ -343,9 +320,7 @@ class SelfClient:
         message,
         **kwargs
     ):
-        """
-        Send a message.
-        """
+        """Send a message."""
 
         return await self._call_method(
             "send_message",
@@ -360,9 +335,7 @@ class SelfClient:
         file,
         **kwargs
     ):
-        """
-        Send a file.
-        """
+        """Send a file."""
 
         return await self._call_method(
             "send_file",
@@ -376,9 +349,7 @@ class SelfClient:
         entity,
         **kwargs
     ):
-        """
-        Get messages.
-        """
+        """Get messages."""
 
         return await self._call_method(
             "get_messages",
@@ -392,9 +363,7 @@ class SelfClient:
         message,
         **kwargs
     ):
-        """
-        Edit a message.
-        """
+        """Edit a message."""
 
         return await self._call_method(
             "edit_message",
@@ -409,9 +378,7 @@ class SelfClient:
         messages,
         **kwargs
     ):
-        """
-        Delete messages.
-        """
+        """Delete messages."""
 
         return await self._call_method(
             "delete_messages",
@@ -427,9 +394,7 @@ class SelfClient:
         from_peer,
         **kwargs
     ):
-        """
-        Forward messages.
-        """
+        """Forward messages."""
 
         return await self._call_method(
             "forward_messages",
@@ -444,9 +409,7 @@ class SelfClient:
     # =========================================================
 
     async def get_entity(self, entity):
-        """
-        Resolve an entity.
-        """
+        """Resolve an entity."""
 
         return await self._call_method(
             "get_entity",
@@ -454,9 +417,7 @@ class SelfClient:
         )
 
     async def get_input_entity(self, entity):
-        """
-        Resolve an input entity.
-        """
+        """Resolve an input entity."""
 
         return await self._call_method(
             "get_input_entity",
@@ -501,7 +462,6 @@ class SelfClient:
         if hasattr(result, "__aiter__"):
             async for user in result:
                 yield user
-
         else:
             for user in result:
                 yield user
@@ -541,4 +501,102 @@ class SelfClient:
         )
 
     async def ban(
-       
+        self,
+        chat,
+        user,
+        **kwargs
+    ):
+        """
+        Ban a user from a group.
+        """
+
+        return await self.edit_permissions(
+            chat,
+            user,
+            view_messages=False,
+            **kwargs
+        )
+
+    async def unban(
+        self,
+        chat,
+        user,
+        **kwargs
+    ):
+        """
+        Unban a user from a group.
+        """
+
+        return await self.edit_permissions(
+            chat,
+            user,
+            view_messages=True,
+            **kwargs
+        )
+
+    async def mute(
+        self,
+        chat,
+        user,
+        **kwargs
+    ):
+        """
+        Restrict a user from sending messages.
+        """
+
+        return await self.edit_permissions(
+            chat,
+            user,
+            send_messages=False,
+            **kwargs
+        )
+
+    async def unmute(
+        self,
+        chat,
+        user,
+        **kwargs
+    ):
+        """
+        Allow a user to send messages.
+        """
+
+        return await self.edit_permissions(
+            chat,
+            user,
+            send_messages=True,
+            **kwargs
+        )
+
+    async def promote(
+        self,
+        chat,
+        user,
+        **kwargs
+    ):
+        """
+        Promote a user to administrator.
+        """
+
+        return await self.edit_admin(
+            chat,
+            user,
+            **kwargs
+        )
+
+    async def demote(
+        self,
+        chat,
+        user,
+        **kwargs
+    ):
+        """
+        Remove administrator privileges.
+        """
+
+        return await self.edit_admin(
+            chat,
+            user,
+            is_admin=False,
+            **kwargs
+        )
