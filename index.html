@@ -201,11 +201,11 @@
         <h1>martsor</h1>
 
         <div class="subtitle">
-            Python Library for Soroush Plus Bots
+            Python Library for Soroush Plus Bots and User Clients
         </div>
 
         <div class="version">
-            Version 0.2.0
+            Version 0.3.0
         </div>
 
     </div>
@@ -218,10 +218,12 @@
         <a href="#install">نصب</a>
         <a href="#quickstart">شروع سریع</a>
         <a href="#bot">Bot</a>
+        <a href="#selfclient">SelfClient</a>
         <a href="#handlers">Handlers</a>
         <a href="#messages">پیام‌ها</a>
         <a href="#keyboard">Keyboard</a>
         <a href="#sending">ارسال</a>
+        <a href="#management">مدیریت</a>
         <a href="#updates">Updates</a>
         <a href="#errors">خطاها</a>
         <a href="#api">API</a>
@@ -236,21 +238,21 @@
 
     <div class="notice">
 
-        <strong>martsor Documentation 0.2.0</strong>
+        <strong>martsor Documentation 0.3.0</strong>
 
         <p>
             مستندات رسمی کتابخانه martsor برای ساخت
-            ربات‌های Python در پیام‌رسان سروش‌پلاس.
+            ربات‌ها و User Clientهای Python در پیام‌رسان سروش‌پلاس.
         </p>
 
         <p>
             نسخه فعلی:
-            <strong>0.2.0</strong>
+            <strong>0.3.0</strong>
         </p>
 
         <p>
-            martsor یک کتابخانه مستقل برای کار با
-            Soroush Plus Bot API است.
+            martsor یک کتابخانه Python برای کار با
+            Soroush Plus Bot API و حساب‌های کاربری است.
         </p>
 
     </div>
@@ -299,6 +301,17 @@
     <li>پشتیبانی از Retry در خطای 429</li>
     <li>Webhook</li>
     <li>Long Polling</li>
+
+    <li>SelfClient</li>
+    <li>اتصال به حساب کاربری سروش‌پلاس</li>
+    <li>دریافت اطلاعات حساب</li>
+    <li>ارسال و دریافت پیام با حساب کاربری</li>
+    <li>مدیریت اعضای گروه</li>
+    <li>مدیریت دسترسی اعضا</li>
+    <li>مدیریت مدیران گروه</li>
+    <li>Ban / Unban</li>
+    <li>Mute / Unmute</li>
+    <li>Promote / Demote</li>
 </ul>
 
 </section>
@@ -314,9 +327,13 @@
 
 <pre><code>pip install martsor</code></pre>
 
-<p>نصب نسخه 0.2.0:</p>
+<p>نسخه 0.3.0:</p>
 
-<pre><code>pip install martsor==0.2.0</code></pre>
+<pre><code>pip install martsor==0.3.0</code></pre>
+
+<p>برای استفاده از SelfClient:</p>
+
+<pre><code>pip install "martsor[self]"</code></pre>
 
 <p>
 martsor برای Python 3.8 و بالاتر طراحی شده است.
@@ -380,6 +397,90 @@ print(me)</code></pre>
 <h3>اجرای Bot</h3>
 
 <pre><code>bot.run()</code></pre>
+
+</section>
+
+
+<!-- SELF CLIENT -->
+
+<section id="selfclient">
+
+<h2>SelfClient</h2>
+
+<p>
+SelfClient برای کار با حساب کاربری سروش‌پلاس
+و اجرای عملیات از طریق حساب کاربری استفاده می‌شود.
+</p>
+
+<h3>ساخت SelfClient</h3>
+
+<pre><code>from martsor import SelfClient
+
+client = SelfClient()</code></pre>
+
+<h3>شروع اتصال</h3>
+
+<pre><code>from martsor import SelfClient
+
+client = SelfClient()
+
+client.start()</code></pre>
+
+<h3>دریافت اطلاعات حساب</h3>
+
+<pre><code>me = client.get_me()
+
+print(me)</code></pre>
+
+<h3>ارسال پیام</h3>
+
+<pre><code>client.send_message(
+    chat_id,
+    "سلام از SelfClient!"
+)</code></pre>
+
+<h3>دریافت پیام‌ها</h3>
+
+<pre><code>messages = client.get_messages(
+    chat_id,
+    limit=10
+)
+
+print(messages)</code></pre>
+
+<h3>ویرایش پیام</h3>
+
+<pre><code>client.edit_message(
+    chat_id,
+    message_id,
+    "متن جدید"
+)</code></pre>
+
+<h3>حذف پیام</h3>
+
+<pre><code>client.delete_messages(
+    chat_id,
+    message_id
+)</code></pre>
+
+<h3>Forward پیام</h3>
+
+<pre><code>client.forward_messages(
+    chat_id,
+    messages,
+    from_chat_id
+)</code></pre>
+
+<div class="warning">
+
+<strong>نکته</strong>
+
+<p>
+SelfClient با حساب کاربری شما کار می‌کند.
+اطلاعات ورود و Session خود را در اختیار دیگران قرار ندهید.
+</p>
+
+</div>
 
 </section>
 
@@ -583,35 +684,9 @@ await bot.send_message(
 </section>
 
 
-<!-- UPDATES -->
-
-<section id="updates">
-
-<h2>Updates</h2>
-
-<h3>دریافت Updates</h3>
-
-<pre><code>updates = bot.get_updates()
-
-for update in updates:
-    print(update)</code></pre>
-
-<h3>Long Polling</h3>
-
-<pre><code>bot.run()</code></pre>
-
-<h3>Webhook</h3>
-
-<pre><code>bot.set_webhook(
-    "https://example.com/webhook"
-)</code></pre>
-
-</section>
-
-
 <!-- MANAGEMENT -->
 
-<section>
+<section id="management">
 
 <h2>مدیریت پیام</h2>
 
@@ -644,6 +719,32 @@ for update in updates:
     chat_id,
     from_chat_id,
     message_id
+)</code></pre>
+
+</section>
+
+
+<!-- UPDATES -->
+
+<section id="updates">
+
+<h2>Updates</h2>
+
+<h3>دریافت Updates</h3>
+
+<pre><code>updates = bot.get_updates()
+
+for update in updates:
+    print(update)</code></pre>
+
+<h3>Long Polling</h3>
+
+<pre><code>bot.run()</code></pre>
+
+<h3>Webhook</h3>
+
+<pre><code>bot.set_webhook(
+    "https://example.com/webhook"
 )</code></pre>
 
 </section>
@@ -699,6 +800,47 @@ Bot
 <span class="method">stop()</span>
 <span class="method">get_me()</span>
 <span class="method">get_updates()</span>
+
+</div>
+
+
+<div class="api-box">
+
+<div class="api-title">
+SelfClient
+</div>
+
+<span class="method">SelfClient()</span>
+<span class="method">start()</span>
+<span class="method">run()</span>
+<span class="method">disconnect()</span>
+<span class="method">run_until_disconnected()</span>
+<span class="method">get_me()</span>
+<span class="method">send_message()</span>
+<span class="method">send_file()</span>
+<span class="method">get_messages()</span>
+<span class="method">edit_message()</span>
+<span class="method">delete_messages()</span>
+<span class="method">forward_messages()</span>
+
+</div>
+
+
+<div class="api-box">
+
+<div class="api-title">
+SelfClient Group Management
+</div>
+
+<span class="method">iter_participants()</span>
+<span class="method">edit_permissions()</span>
+<span class="method">edit_admin()</span>
+<span class="method">ban()</span>
+<span class="method">unban()</span>
+<span class="method">mute()</span>
+<span class="method">unmute()</span>
+<span class="method">promote()</span>
+<span class="method">demote()</span>
 
 </div>
 
@@ -774,7 +916,7 @@ Keyboard
 <h2>نسخه</h2>
 
 <p>
-martsor 0.2.0
+martsor 0.3.0
 </p>
 
 <p>
@@ -809,7 +951,7 @@ martsor 0.2.0
 </main>
 
 <footer>
-martsor 0.2.0 — Python Library for Soroush Plus Bots
+martsor 0.3.0 — Python Library for Soroush Plus Bots and User Clients
 </footer>
 
 </body>
