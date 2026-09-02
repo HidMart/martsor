@@ -1,9 +1,8 @@
-# martsor/self_client.py
 """
-martsor Self Client
-Version: 0.3.0
+martsor Self Client.
 
-User-account client for Soroush Plus based on SPlusthon.
+User account client for Soroush Plus.
+Version: 0.3.0
 """
 
 import inspect
@@ -12,7 +11,7 @@ import re
 
 class SelfClient:
     """
-    Client for using a Soroush Plus user account.
+    Client for Soroush Plus user accounts.
 
     Requires:
         pip install "martsor[self]"
@@ -35,86 +34,97 @@ class SelfClient:
                 'pip install "martsor[self]"'
             ) from exc
 
-        self._SoroushClient = SoroushClient
         self._events = events
         self._StringSession = StringSession
 
-        # Empty StringSession = first login
         if session is None:
             session = StringSession()
+
         elif isinstance(session, str):
             session = StringSession(session)
 
-        client_kwargs = dict(kwargs)
+        options = dict(kwargs)
 
         if api_id is not None:
-            client_kwargs["api_id"] = api_id
+            options["api_id"] = api_id
 
         if api_hash is not None:
-            client_kwargs["api_hash"] = api_hash
+            options["api_hash"] = api_hash
 
         self.client = SoroushClient(
             session,
-            **client_kwargs
+            **options
         )
 
         self._message_handlers = []
         self._command_handlers = []
         self._callback_handlers = []
+
+        self._events_installed = False
         self._started = False
 
-    # ---------------------------------------------------------
-    # Helpers
-    # ---------------------------------------------------------
+    # =========================================================
+    # Internal
+    # =========================================================
 
     async def _call(self, function, *args, **kwargs):
         """
-        Supports both async and sync methods from SPlusthon.
+        Call sync or async functions safely.
         """
-        result = function(*args, **kwargs)
+
+        result = function(
+            *args,
+            **kwargs
+        )
 
         if inspect.isawaitable(result):
             return await result
 
         return result
 
-    async def _call_method(self, name, *args, **kwargs):
+    async def _call_method(
+        self,
+        name,
+        *args,
+        **kwargs
+    ):
         """
-        Call a method on the underlying SPlusthon client.
+        Call a method from the underlying SPlusthon client.
         """
-        function = getattr(self.client, name, None)
 
-        if function is None:
+        method = getattr(
+            self.client,
+            name,
+            None
+        )
+
+        if method is None:
             raise AttributeError(
                 "SPlusthon does not provide method: "
                 + name
             )
 
         return await self._call(
-            function,
+            method,
             *args,
             **kwargs
         )
 
-    # ---------------------------------------------------------
+    # =========================================================
     # Properties
-    # ---------------------------------------------------------
+    # =========================================================
 
     @property
     def session(self):
-        """Return the current SPlusthon session."""
+        """Return the current session."""
+
         return self.client.session
 
-    @property
-    def me(self):
-        """Return the current account information."""
-        return self.client.get_me()
+    # =========================================================
+    # Event system
+    # =========================================================
 
-    # ---------------------------------------------------------
-    # Event handlers
-    # ---------------------------------------------------------
-
-    def on_message(self, handler=None):
+    def on_message(self, function=None):
         """
         Register a message handler.
 
@@ -125,12 +135,12 @@ class SelfClient:
                 print(event.text)
         """
 
-        def decorator(function):
-            self._message_handlers.append(function)
-            return function
+        def decorator(handler):
+            self._message_handlers.append(handler)
+            return handler
 
-        if handler is not None:
-            return decorator(handler)
+        if function is not None:
+            return decorator(function)
 
         return decorator
 
@@ -147,36 +157,37 @@ class SelfClient:
 
         command = command.lstrip("/").lower()
 
-        def decorator(function):
+        def decorator(handler):
             self._command_handlers.append(
-                (command, function)
+                (command, handler)
             )
-            return function
+            return handler
 
         return decorator
 
-    def on_callback(self, handler=None):
+    def on_callback(self, function=None):
         """
         Register a callback handler.
-
-        This is kept as a generic callback registration
-        point for SPlusthon event objects.
         """
 
-        def decorator(function):
-            self._callback_handlers.append(function)
-            return function
+        def decorator(handler):
+            self._callback_handlers.append(handler)
+            return handler
 
-        if handler is not None:
-            return decorator(handler)
+        if function is not None:
+            return decorator(function)
 
         return decorator
 
-    # ---------------------------------------------------------
-    # Internal event dispatch
-    # ---------------------------------------------------------
+    # =========================================================
+    # Dispatch
+    # =========================================================
 
-    async def _run_handler(self, handler, event):
+    async def _run_handler(
+        self,
+        handler,
+        event
+    ):
         result = handler(event)
 
         if inspect.isawaitable(result):
@@ -185,16 +196,23 @@ class SelfClient:
         return result
 
     async def _dispatch_message(self, event):
-        text = getattr(event, "text", None) or ""
+        text = getattr(
+            event,
+            "text",
+            None
+        )
 
-        # Normal message handlers
+        if text is None:
+            text = ""
+
+        # Normal messages
         for handler in self._message_handlers:
             await self._run_handler(
                 handler,
                 event
             )
 
-        # Command handlers
+        # Commands
         if text.startswith("/"):
             match = re.match(
                 r"^/([A-Za-z0-9_]+)",
@@ -218,28 +236,37 @@ class SelfClient:
                 event
             )
 
-    # ---------------------------------------------------------
-    # Start / Stop
-    # ---------------------------------------------------------
+    # =========================================================
+    # Events
+    # =========================================================
 
     def _install_events(self):
         """
         Connect martsor handlers to SPlusthon.
         """
 
+        if self._events_installed:
+            return
+
         @self.client.on(self._events.NewMessage)
-        async def _new_message(event):
+        async def _message_event(event):
             await self._dispatch_message(event)
+
+        self._events_installed = True
+
+    # =========================================================
+    # Start / Stop
+    # =========================================================
 
     async def start(self, *args, **kwargs):
         """
-        Start/login the Self Client.
+        Start the Self Client.
 
-        On first launch SPlusthon may request authentication.
+        On the first login, SPlusthon may ask
+        for authentication information.
         """
 
-        if not self._started:
-            self._install_events()
+        self._install_events()
 
         result = self.client.start(
             *args,
@@ -255,7 +282,7 @@ class SelfClient:
 
     async def run_until_disconnected(self):
         """
-        Keep the client running until disconnected.
+        Keep the client running.
         """
 
         result = self.client.run_until_disconnected()
@@ -267,7 +294,7 @@ class SelfClient:
 
     async def run(self, *args, **kwargs):
         """
-        Start the client and keep it running.
+        Start and run the client.
         """
 
         await self.start(
@@ -282,20 +309,33 @@ class SelfClient:
         Disconnect the client.
         """
 
-        function = getattr(
+        method = getattr(
             self.client,
             "disconnect",
             None
         )
 
-        if function is None:
+        if method is None:
             return None
 
-        return await self._call(function)
+        return await self._call(method)
 
-    # ---------------------------------------------------------
+    # =========================================================
+    # Account
+    # =========================================================
+
+    async def get_me(self):
+        """
+        Get current account information.
+        """
+
+        return await self._call_method(
+            "get_me"
+        )
+
+    # =========================================================
     # Messaging
-    # ---------------------------------------------------------
+    # =========================================================
 
     async def send_message(
         self,
@@ -303,6 +343,10 @@ class SelfClient:
         message,
         **kwargs
     ):
+        """
+        Send a message.
+        """
+
         return await self._call_method(
             "send_message",
             entity,
@@ -316,6 +360,10 @@ class SelfClient:
         file,
         **kwargs
     ):
+        """
+        Send a file.
+        """
+
         return await self._call_method(
             "send_file",
             entity,
@@ -328,50 +376,26 @@ class SelfClient:
         entity,
         **kwargs
     ):
+        """
+        Get messages.
+        """
+
         return await self._call_method(
             "get_messages",
             entity,
             **kwargs
         )
 
-    async def iter_messages(
-        self,
-        entity,
-        **kwargs
-    ):
-        """
-        Async iterator for messages.
-        """
-
-        function = getattr(
-            self.client,
-            "iter_messages",
-            None
-        )
-
-        if function is None:
-            raise AttributeError(
-                "SPlusthon does not provide iter_messages"
-            )
-
-        result = function(
-            entity,
-            **kwargs
-        )
-
-        if hasattr(result, "__aiter__"):
-            async for item in result:
-                yield item
-        else:
-            for item in result:
-                yield item
-
     async def edit_message(
         self,
-        entity=None,
-        message=None,
+        entity,
+        message,
         **kwargs
     ):
+        """
+        Edit a message.
+        """
+
         return await self._call_method(
             "edit_message",
             entity,
@@ -385,6 +409,10 @@ class SelfClient:
         messages,
         **kwargs
     ):
+        """
+        Delete messages.
+        """
+
         return await self._call_method(
             "delete_messages",
             entity,
@@ -399,6 +427,10 @@ class SelfClient:
         from_peer,
         **kwargs
     ):
+        """
+        Forward messages.
+        """
+
         return await self._call_method(
             "forward_messages",
             entity,
@@ -407,30 +439,33 @@ class SelfClient:
             **kwargs
         )
 
-    # ---------------------------------------------------------
-    # Entity
-    # ---------------------------------------------------------
+    # =========================================================
+    # Entities
+    # =========================================================
 
     async def get_entity(self, entity):
+        """
+        Resolve an entity.
+        """
+
         return await self._call_method(
             "get_entity",
             entity
         )
 
     async def get_input_entity(self, entity):
+        """
+        Resolve an input entity.
+        """
+
         return await self._call_method(
             "get_input_entity",
             entity
         )
 
-    async def get_me(self):
-        return await self._call_method(
-            "get_me"
-        )
-
-    # ---------------------------------------------------------
+    # =========================================================
     # Group management
-    # ---------------------------------------------------------
+    # =========================================================
 
     async def iter_participants(
         self,
@@ -438,7 +473,7 @@ class SelfClient:
         **kwargs
     ):
         """
-        Iterate over group members.
+        Iterate over group participants.
 
         Example:
 
@@ -446,19 +481,19 @@ class SelfClient:
                 print(user.id)
         """
 
-        function = getattr(
+        method = getattr(
             self.client,
             "iter_participants",
             None
         )
 
-        if function is None:
+        if method is None:
             raise AttributeError(
                 "SPlusthon does not provide "
                 "iter_participants"
             )
 
-        result = function(
+        result = method(
             entity,
             **kwargs
         )
@@ -466,6 +501,7 @@ class SelfClient:
         if hasattr(result, "__aiter__"):
             async for user in result:
                 yield user
+
         else:
             for user in result:
                 yield user
@@ -477,15 +513,7 @@ class SelfClient:
         **permissions
     ):
         """
-        Change a user's group permissions.
-
-        Example:
-
-            await client.edit_permissions(
-                chat,
-                user,
-                send_messages=False
-            )
+        Edit group permissions for a user.
         """
 
         return await self._call_method(
@@ -502,7 +530,7 @@ class SelfClient:
         **kwargs
     ):
         """
-        Change administrator status/rights.
+        Edit administrator rights.
         """
 
         return await self._call_method(
@@ -513,169 +541,4 @@ class SelfClient:
         )
 
     async def ban(
-        self,
-        chat,
-        user,
-        **kwargs
-    ):
-        """
-        Ban a user from a group.
-
-        Uses SPlusthon's permission system.
-        """
-
-        permissions = {
-            "view_messages": False
-        }
-
-        permissions.update(kwargs)
-
-        return await self.edit_permissions(
-            chat,
-            user,
-            **permissions
-        )
-
-    async def unban(
-        self,
-        chat,
-        user,
-        **kwargs
-    ):
-        """
-        Remove the view restriction from a user.
-        """
-
-        permissions = {
-            "view_messages": True
-        }
-
-        permissions.update(kwargs)
-
-        return await self.edit_permissions(
-            chat,
-            user,
-            **permissions
-        )
-
-    async def mute(
-        self,
-        chat,
-        user,
-        **kwargs
-    ):
-        """
-        Restrict a user's ability to send messages.
-        """
-
-        permissions = {
-            "send_messages": False
-        }
-
-        permissions.update(kwargs)
-
-        return await self.edit_permissions(
-            chat,
-            user,
-            **permissions
-        )
-
-    async def unmute(
-        self,
-        chat,
-        user,
-        **kwargs
-    ):
-        """
-        Restore a user's message permission.
-        """
-
-        permissions = {
-            "send_messages": True
-        }
-
-        permissions.update(kwargs)
-
-        return await self.edit_permissions(
-            chat,
-            user,
-            **permissions
-        )
-
-    async def promote(
-        self,
-        chat,
-        user,
-        **kwargs
-    ):
-        """
-        Promote a user to administrator.
-
-        Extra administrator rights can be passed through kwargs.
-        """
-
-        return await self.edit_admin(
-            chat,
-            user,
-            **kwargs
-        )
-
-    async def demote(
-        self,
-        chat,
-        user,
-        **kwargs
-    ):
-        """
-        Remove administrator status.
-        """
-
-        return await self.edit_admin(
-            chat,
-            user,
-            is_admin=False,
-            **kwargs
-        )
-
-    async def kick(
-        self,
-        chat,
-        user,
-        **kwargs
-    ):
-        """
-        Remove a user from a group.
-
-        This uses the permission API available in SPlusthon.
-        """
-
-        permissions = {
-            "view_messages": False
-        }
-
-        permissions.update(kwargs)
-
-        return await self.edit_permissions(
-            chat,
-            user,
-            **permissions
-        )
-
-    # ---------------------------------------------------------
-    # Generic access
-    # ---------------------------------------------------------
-
-    def __getattr__(self, name):
-        """
-        Forward unknown attributes/methods to SPlusthon.
-
-        This allows advanced SPlusthon functionality without
-        requiring a new wrapper for every API method.
-        """
-
-        client = self.__dict__.get("client")
-
-        if client is None:
-            raise AttributeError(name)
-
-        return getattr(client, name)
+       
