@@ -1,11 +1,12 @@
-# martsor
+martsor
 
-Python library for building bots with the Soroush Plus Bot API.
+Python library for building bots and user clients with the Soroush Plus API.
 
-Version: 0.2.0
+Version: 0.3.0
 
+Features
 
-## Features
+Bot
 
 - Soroush Plus Bot API
 - Long polling
@@ -37,10 +38,75 @@ Version: 0.2.0
 - Bot commands
 - Webhook API methods
 - MarkdownV2 / HTML parse mode support
-- No external dependencies
 
+SelfClient
 
-## Installation
+- Soroush Plus user client
+- Login with phone number
+- Get current account information
+- Send messages
+- Send files
+- Get messages
+- Edit messages
+- Delete messages
+- Forward messages
+- Message event handlers
+- Command event handlers
+- Callback event handlers
 
-```bash
+Group Management
+
+- Get group members
+- Manage member permissions
+- Promote members
+- Demote admins
+- Ban members
+- Unban members
+- Mute members
+- Unmute members
+- Manage group administrators
+
+Installation
+
+Basic installation
+
 pip install martsor
+
+SelfClient
+
+pip install "martsor[self]"
+
+Example
+
+Bot
+
+from martsor import Bot
+
+bot = Bot("YOUR_BOT_TOKEN")
+
+@bot.on_message()
+async def handler(message):
+    await message.reply("سلام!")
+
+bot.run()
+
+SelfClient
+
+import asyncio
+from martsor import SelfClient
+
+async def main():
+    client = SelfClient()
+
+    await client.start()
+
+    me = await client.get_me()
+    print("Logged in as:", me)
+
+    await client.run_until_disconnected()
+
+asyncio.run(main())
+
+License
+
+MIT License
