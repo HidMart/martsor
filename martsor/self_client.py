@@ -1,8 +1,8 @@
 """
-martsor Self Client.
+Martsor Self Client.
 
 User account client for Soroush Plus.
-Version: 0.3.0
+Version: 0.3.1
 """
 
 import inspect
@@ -13,8 +13,7 @@ class SelfClient:
     """
     Client for Soroush Plus user accounts.
 
-    Requires:
-        pip install SPlusthon
+    SPlusthon is managed automatically by Martsor.
     """
 
     def __init__(
@@ -29,13 +28,13 @@ class SelfClient:
             from splusthon.sessions import StringSession
         except ImportError as exc:
             raise ImportError(
-                "SelfClient requires SPlusthon.\n"
-                "Install it with:\n"
-                "pip install SPlusthon"
+                "Martsor SelfClient backend is not available. "
+                "Please reinstall Martsor with its dependencies."
             ) from exc
 
         self._events = events
         self._StringSession = StringSession
+        self._SoroushClient = SoroushClient
 
         if session is None:
             session = StringSession()
@@ -77,13 +76,14 @@ class SelfClient:
         return result
 
     async def _call_method(self, name, *args, **kwargs):
-        """Call a method from the SPlusthon client."""
+        """Call a backend client method."""
 
         method = getattr(self.client, name, None)
 
         if method is None:
             raise AttributeError(
-                "SPlusthon does not provide method: " + name
+                "Martsor backend does not provide method: "
+                + name
             )
 
         return await self._call(
@@ -98,7 +98,7 @@ class SelfClient:
 
     @staticmethod
     def _get_report_reason(reason):
-        """Convert a reason name to a SPlusthon report reason."""
+        """Convert a reason name to a report reason."""
 
         from splusthon.tl.types import (
             InputReportReasonChildAbuse,
@@ -163,15 +163,6 @@ class SelfClient:
     ):
         """
         Report one message.
-
-        Example:
-
-            await client.report_message(
-                "@username",
-                12345,
-                reason="spam",
-                message="This is spam"
-            )
         """
 
         from splusthon.tl.functions.messages import ReportRequest
@@ -211,14 +202,6 @@ class SelfClient:
     ):
         """
         Report a user, group or channel.
-
-        Example:
-
-            await client.report_peer(
-                "@username",
-                reason="fake",
-                message="Fake account"
-            )
         """
 
         from splusthon.tl.functions.account import ReportPeerRequest
@@ -243,10 +226,6 @@ class SelfClient:
     async def report_spam(self, entity):
         """
         Report a peer as spam.
-
-        Example:
-
-            await client.report_spam("@username")
         """
 
         from splusthon.tl.functions.messages import ReportSpamRequest
@@ -383,7 +362,7 @@ class SelfClient:
     # =========================================================
 
     def _install_events(self):
-        """Connect martsor handlers to SPlusthon."""
+        """Connect Martsor handlers to the backend."""
 
         if self._events_installed:
             return
@@ -414,8 +393,7 @@ class SelfClient:
         """
         Start the Self Client.
 
-        SPlusthon may ask for authentication
-        information on first login.
+        Authentication is handled by the backend.
         """
 
         self._install_events()
@@ -600,9 +578,7 @@ class SelfClient:
         entity,
         **kwargs
     ):
-        """
-        Iterate over group participants.
-        """
+        """Iterate over group participants."""
 
         method = getattr(
             self.client,
@@ -612,7 +588,7 @@ class SelfClient:
 
         if method is None:
             raise AttributeError(
-                "SPlusthon does not provide "
+                "Martsor backend does not provide "
                 "iter_participants"
             )
 
@@ -634,7 +610,7 @@ class SelfClient:
         user,
         **permissions
     ):
-        """Edit group permissions for a user."""
+        """Edit group permissions."""
 
         return await self._call_method(
             "edit_permissions",
@@ -743,6 +719,5 @@ class SelfClient:
         return await self.edit_admin(
             chat,
             user,
-            is_admin=False,
             **kwargs
         )
