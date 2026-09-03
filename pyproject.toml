@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "martsor"
-version = "0.3.0"
+version = "0.3.1"
 
 description = "Python library for building Soroush Plus bots and user clients."
 
@@ -36,8 +36,8 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -46,11 +46,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13"
 ]
 
-dependencies = []
-
-
-[project.optional-dependencies]
-self = [
+dependencies = [
     "SPlusthon>=1.1.4"
 ]
 
