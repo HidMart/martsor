@@ -93,6 +93,176 @@ class SelfClient:
         )
 
     # =========================================================
+    # Report helpers
+    # =========================================================
+
+    @staticmethod
+    def _get_report_reason(reason):
+        """Convert a reason name to a SPlusthon report reason."""
+
+        from splusthon.tl.types import (
+            InputReportReasonChildAbuse,
+            InputReportReasonCopyright,
+            InputReportReasonFake,
+            InputReportReasonGeoIrrelevant,
+            InputReportReasonIllegalDrugs,
+            InputReportReasonOther,
+            InputReportReasonPersonalDetails,
+            InputReportReasonPornography,
+            InputReportReasonSpam,
+            InputReportReasonViolence,
+        )
+
+        reasons = {
+            "spam": InputReportReasonSpam,
+            "fake": InputReportReasonFake,
+            "violence": InputReportReasonViolence,
+            "pornography": InputReportReasonPornography,
+            "child_abuse": InputReportReasonChildAbuse,
+            "copyright": InputReportReasonCopyright,
+            "geo_irrelevant": InputReportReasonGeoIrrelevant,
+            "illegal_drugs": InputReportReasonIllegalDrugs,
+            "other": InputReportReasonOther,
+            "personal_details": InputReportReasonPersonalDetails,
+        }
+
+        if not isinstance(reason, str):
+            raise TypeError(
+                "reason must be a string"
+            )
+
+        key = (
+            reason.strip()
+            .lower()
+            .replace("-", "_")
+            .replace(" ", "_")
+        )
+
+        reason_class = reasons.get(key)
+
+        if reason_class is None:
+            available = ", ".join(reasons.keys())
+
+            raise ValueError(
+                f"Unknown report reason: {reason}. "
+                f"Available reasons: {available}"
+            )
+
+        return reason_class()
+
+    # =========================================================
+    # Report message
+    # =========================================================
+
+    async def report_message(
+        self,
+        entity,
+        message_id,
+        reason="spam",
+        message=""
+    ):
+        """
+        Report one message.
+
+        Example:
+
+            await client.report_message(
+                "@username",
+                12345,
+                reason="spam",
+                message="This is spam"
+            )
+        """
+
+        from splusthon.tl.functions.messages import ReportRequest
+
+        if (
+            isinstance(message_id, bool)
+            or not isinstance(message_id, int)
+            or message_id <= 0
+        ):
+            raise ValueError(
+                "message_id must be a positive integer"
+            )
+
+        peer = await self.get_input_entity(entity)
+
+        request = ReportRequest(
+            peer=peer,
+            id=[message_id],
+            reason=self._get_report_reason(reason),
+            message=message or "",
+        )
+
+        return await self._call(
+            self.client,
+            request
+        )
+
+    # =========================================================
+    # Report peer
+    # =========================================================
+
+    async def report_peer(
+        self,
+        entity,
+        reason="spam",
+        message=""
+    ):
+        """
+        Report a user, group or channel.
+
+        Example:
+
+            await client.report_peer(
+                "@username",
+                reason="fake",
+                message="Fake account"
+            )
+        """
+
+        from splusthon.tl.functions.account import ReportPeerRequest
+
+        peer = await self.get_input_entity(entity)
+
+        request = ReportPeerRequest(
+            peer=peer,
+            reason=self._get_report_reason(reason),
+            message=message or "",
+        )
+
+        return await self._call(
+            self.client,
+            request
+        )
+
+    # =========================================================
+    # Report spam
+    # =========================================================
+
+    async def report_spam(self, entity):
+        """
+        Report a peer as spam.
+
+        Example:
+
+            await client.report_spam("@username")
+        """
+
+        from splusthon.tl.functions.messages import ReportSpamRequest
+
+        peer = await self.get_input_entity(entity)
+
+        request = ReportSpamRequest(
+            peer=peer
+        )
+
+        return await self._call(
+            self.client,
+            request
+        )
+
+    # =========================================================
     # Properties
     # =========================================================
 
@@ -161,7 +331,6 @@ class SelfClient:
         if text is None:
             text = ""
 
-        # Normal messages
         for handler in self._message_handlers:
             try:
                 await self._run_handler(
@@ -174,7 +343,6 @@ class SelfClient:
                     exc
                 )
 
-        # Commands
         if text.startswith("/"):
             match = re.match(
                 r"^/([A-Za-z0-9_]+)",
@@ -224,7 +392,6 @@ class SelfClient:
         async def _message_event(event):
             await self._dispatch_message(event)
 
-        # CallbackQuery may not be available in every version.
         callback_event = getattr(
             self._events,
             "CallbackQuery",
@@ -435,11 +602,6 @@ class SelfClient:
     ):
         """
         Iterate over group participants.
-
-        Example:
-
-            async for user in client.iter_participants(chat):
-                print(user.id)
         """
 
         method = getattr(
@@ -472,9 +634,7 @@ class SelfClient:
         user,
         **permissions
     ):
-        """
-        Edit group permissions for a user.
-        """
+        """Edit group permissions for a user."""
 
         return await self._call_method(
             "edit_permissions",
@@ -489,9 +649,7 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """
-        Edit administrator rights.
-        """
+        """Edit administrator rights."""
 
         return await self._call_method(
             "edit_admin",
@@ -506,9 +664,7 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """
-        Ban a user from a group.
-        """
+        """Ban a user from a group."""
 
         return await self.edit_permissions(
             chat,
@@ -523,9 +679,7 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """
-        Unban a user from a group.
-        """
+        """Unban a user from a group."""
 
         return await self.edit_permissions(
             chat,
@@ -540,9 +694,7 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """
-        Restrict a user from sending messages.
-        """
+        """Restrict a user from sending messages."""
 
         return await self.edit_permissions(
             chat,
@@ -557,9 +709,7 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """
-        Allow a user to send messages.
-        """
+        """Allow a user to send messages."""
 
         return await self.edit_permissions(
             chat,
@@ -574,9 +724,7 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """
-        Promote a user to administrator.
-        """
+        """Promote a user to administrator."""
 
         return await self.edit_admin(
             chat,
@@ -590,9 +738,7 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """
-        Remove administrator privileges.
-        """
+        """Remove administrator privileges."""
 
         return await self.edit_admin(
             chat,
