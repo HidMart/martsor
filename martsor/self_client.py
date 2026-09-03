@@ -8,6 +8,8 @@ Version: 0.3.1
 import inspect
 import re
 
+from .keyboards import Button, InlineKeyboard
+
 
 class SelfClient:
     """
@@ -61,13 +63,11 @@ class SelfClient:
         self._events_installed = False
         self._started = False
 
-    # =========================================================
-    # Internal
-    # =========================================================
+    # ============================================================
+    # Internal helpers
+    # ============================================================
 
     async def _call(self, function, *args, **kwargs):
-        """Call sync or async functions safely."""
-
         result = function(*args, **kwargs)
 
         if inspect.isawaitable(result):
@@ -76,14 +76,11 @@ class SelfClient:
         return result
 
     async def _call_method(self, name, *args, **kwargs):
-        """Call a backend client method."""
-
         method = getattr(self.client, name, None)
 
         if method is None:
             raise AttributeError(
-                "Martsor backend does not provide method: "
-                + name
+                "Martsor backend does not provide method: " + name
             )
 
         return await self._call(
@@ -92,14 +89,127 @@ class SelfClient:
             **kwargs
         )
 
-    # =========================================================
+    # ============================================================
+    # Keyboard support
+    # ============================================================
+
+    @staticmethod
+    def _convert_button(button):
+        """
+        Convert a Martsor button into a SPlusthon button.
+        """
+
+        try:
+            from splusthon import Button as SPlusButton
+        except ImportError as exc:
+            raise ImportError(
+                "SPlusthon is required for SelfClient buttons."
+            ) from exc
+
+        # Already a native SPlusthon button
+        if isinstance(button, SPlusButton):
+            return button
+
+        # Martsor Button
+        if isinstance(button, Button):
+            if button.url is not None:
+                return SPlusButton.url(
+                    button.text,
+                    button.url
+                )
+
+            callback_data = (
+                button.callback_data
+                if button.callback_data is not None
+                else button.switch_inline_query
+            )
+
+            if callback_data is not None:
+                return SPlusButton.inline(
+                    button.text,
+                    data=callback_data
+                )
+
+            return SPlusButton.inline(
+                button.text,
+                data=button.text
+            )
+
+        # Dictionary support
+        if isinstance(button, dict):
+            text = button.get("text", "")
+
+            if button.get("url") is not None:
+                return SPlusButton.url(
+                    text,
+                    button["url"]
+                )
+
+            data = button.get(
+                "callback_data",
+                button.get("data")
+            )
+
+            if data is not None:
+                return SPlusButton.inline(
+                    text,
+                    data=data
+                )
+
+        # Unknown button type
+        return button
+
+    @classmethod
+    def _convert_buttons(cls, buttons):
+        """
+        Convert Martsor keyboard definitions to SPlusthon format.
+        """
+
+        if buttons is None:
+            return None
+
+        # Martsor InlineKeyboard
+        if isinstance(buttons, InlineKeyboard):
+            buttons = buttons.rows
+
+        # Single button
+        if isinstance(buttons, Button):
+            return cls._convert_button(buttons)
+
+        # Single dictionary button
+        if isinstance(buttons, dict):
+            return cls._convert_button(buttons)
+
+        # Nested keyboard rows
+        if isinstance(buttons, (list, tuple)):
+            result = []
+
+            for item in buttons:
+                if isinstance(item, (list, tuple)):
+                    row = []
+
+                    for button in item:
+                        row.append(
+                            cls._convert_button(button)
+                        )
+
+                    result.append(row)
+
+                else:
+                    result.append(
+                        cls._convert_button(item)
+                    )
+
+            return result
+
+        return buttons
+
+    # ============================================================
     # Report helpers
-    # =========================================================
+    # ============================================================
 
     @staticmethod
     def _get_report_reason(reason):
-        """Convert a reason name to a report reason."""
-
         from splusthon.tl.types import (
             InputReportReasonChildAbuse,
             InputReportReasonCopyright,
@@ -132,7 +242,8 @@ class SelfClient:
             )
 
         key = (
-            reason.strip()
+            reason
+            .strip()
             .lower()
             .replace("-", "_")
             .replace(" ", "_")
@@ -150,10 +261,6 @@ class SelfClient:
 
         return reason_class()
 
-    # =========================================================
-    # Report message
-    # =========================================================
-
     async def report_message(
         self,
         entity,
@@ -161,10 +268,6 @@ class SelfClient:
         reason="spam",
         message=""
     ):
-        """
-        Report one message.
-        """
-
         from splusthon.tl.functions.messages import ReportRequest
 
         if (
@@ -190,20 +293,12 @@ class SelfClient:
             request
         )
 
-    # =========================================================
-    # Report peer
-    # =========================================================
-
     async def report_peer(
         self,
         entity,
         reason="spam",
         message=""
     ):
-        """
-        Report a user, group or channel.
-        """
-
         from splusthon.tl.functions.account import ReportPeerRequest
 
         peer = await self.get_input_entity(entity)
@@ -219,15 +314,7 @@ class SelfClient:
             request
         )
 
-    # =========================================================
-    # Report spam
-    # =========================================================
-
     async def report_spam(self, entity):
-        """
-        Report a peer as spam.
-        """
-
         from splusthon.tl.functions.messages import ReportSpamRequest
 
         peer = await self.get_input_entity(entity)
@@ -241,22 +328,19 @@ class SelfClient:
             request
         )
 
-    # =========================================================
-    # Properties
-    # =========================================================
+    # ============================================================
+    # Session
+    # ============================================================
 
     @property
     def session(self):
-        """Return the current session."""
-
         return self.client.session
 
-    # =========================================================
-    # Event system
-    # =========================================================
+    # ============================================================
+    # Handlers
+    # ============================================================
 
     def on_message(self, function=None):
-        """Register a message handler."""
 
         def decorator(handler):
             self._message_handlers.append(handler)
@@ -268,8 +352,6 @@ class SelfClient:
         return decorator
 
     def on_command(self, command):
-        """Register a command handler."""
-
         command = command.lstrip("/").lower()
 
         def decorator(handler):
@@ -281,7 +363,6 @@ class SelfClient:
         return decorator
 
     def on_callback(self, function=None):
-        """Register a callback handler."""
 
         def decorator(handler):
             self._callback_handlers.append(handler)
@@ -292,10 +373,6 @@ class SelfClient:
 
         return decorator
 
-    # =========================================================
-    # Dispatch
-    # =========================================================
-
     async def _run_handler(self, handler, event):
         result = handler(event)
 
@@ -305,7 +382,11 @@ class SelfClient:
         return result
 
     async def _dispatch_message(self, event):
-        text = getattr(event, "text", None)
+        text = getattr(
+            event,
+            "text",
+            None
+        )
 
         if text is None:
             text = ""
@@ -357,13 +438,7 @@ class SelfClient:
                     exc
                 )
 
-    # =========================================================
-    # Events
-    # =========================================================
-
     def _install_events(self):
-        """Connect Martsor handlers to the backend."""
-
         if self._events_installed:
             return
 
@@ -385,17 +460,11 @@ class SelfClient:
 
         self._events_installed = True
 
-    # =========================================================
-    # Start / Stop
-    # =========================================================
+    # ============================================================
+    # Connection
+    # ============================================================
 
     async def start(self, *args, **kwargs):
-        """
-        Start the Self Client.
-
-        Authentication is handled by the backend.
-        """
-
         self._install_events()
 
         result = self.client.start(
@@ -411,8 +480,6 @@ class SelfClient:
         return result
 
     async def run_until_disconnected(self):
-        """Keep the client running."""
-
         result = self.client.run_until_disconnected()
 
         if inspect.isawaitable(result):
@@ -421,8 +488,6 @@ class SelfClient:
         return result
 
     async def run(self, *args, **kwargs):
-        """Start and run the client."""
-
         await self.start(
             *args,
             **kwargs
@@ -431,8 +496,6 @@ class SelfClient:
         return await self.run_until_disconnected()
 
     async def disconnect(self):
-        """Disconnect the client."""
-
         method = getattr(
             self.client,
             "disconnect",
@@ -444,28 +507,39 @@ class SelfClient:
 
         return await self._call(method)
 
-    # =========================================================
+    # ============================================================
     # Account
-    # =========================================================
+    # ============================================================
 
     async def get_me(self):
-        """Get current account information."""
-
         return await self._call_method(
             "get_me"
         )
 
-    # =========================================================
+    # ============================================================
     # Messaging
-    # =========================================================
+    # ============================================================
 
     async def send_message(
         self,
         entity,
         message,
+        buttons=None,
         **kwargs
     ):
-        """Send a message."""
+        """
+        Send a message from the user account.
+
+        Martsor buttons are automatically converted
+        to the native SPlusthon markup.
+        """
+
+        if buttons is not None:
+            buttons = self._convert_buttons(
+                buttons
+            )
+
+            kwargs["buttons"] = buttons
 
         return await self._call_method(
             "send_message",
@@ -478,9 +552,22 @@ class SelfClient:
         self,
         entity,
         file,
+        buttons=None,
         **kwargs
     ):
-        """Send a file."""
+        """
+        Send a file from the user account.
+
+        Buttons can be supplied in the same format
+        used by send_message().
+        """
+
+        if buttons is not None:
+            buttons = self._convert_buttons(
+                buttons
+            )
+
+            kwargs["buttons"] = buttons
 
         return await self._call_method(
             "send_file",
@@ -494,8 +581,6 @@ class SelfClient:
         entity,
         **kwargs
     ):
-        """Get messages."""
-
         return await self._call_method(
             "get_messages",
             entity,
@@ -506,9 +591,15 @@ class SelfClient:
         self,
         entity,
         message,
+        buttons=None,
         **kwargs
     ):
-        """Edit a message."""
+        if buttons is not None:
+            buttons = self._convert_buttons(
+                buttons
+            )
+
+            kwargs["buttons"] = buttons
 
         return await self._call_method(
             "edit_message",
@@ -523,8 +614,6 @@ class SelfClient:
         messages,
         **kwargs
     ):
-        """Delete messages."""
-
         return await self._call_method(
             "delete_messages",
             entity,
@@ -539,8 +628,6 @@ class SelfClient:
         from_peer,
         **kwargs
     ):
-        """Forward messages."""
-
         return await self._call_method(
             "forward_messages",
             entity,
@@ -549,37 +636,31 @@ class SelfClient:
             **kwargs
         )
 
-    # =========================================================
+    # ============================================================
     # Entities
-    # =========================================================
+    # ============================================================
 
     async def get_entity(self, entity):
-        """Resolve an entity."""
-
         return await self._call_method(
             "get_entity",
             entity
         )
 
     async def get_input_entity(self, entity):
-        """Resolve an input entity."""
-
         return await self._call_method(
             "get_input_entity",
             entity
         )
 
-    # =========================================================
-    # Group management
-    # =========================================================
+    # ============================================================
+    # Participants
+    # ============================================================
 
     async def iter_participants(
         self,
         entity,
         **kwargs
     ):
-        """Iterate over group participants."""
-
         method = getattr(
             self.client,
             "iter_participants",
@@ -604,14 +685,16 @@ class SelfClient:
             for user in result:
                 yield user
 
+    # ============================================================
+    # Permissions
+    # ============================================================
+
     async def edit_permissions(
         self,
         chat,
         user,
         **permissions
     ):
-        """Edit group permissions."""
-
         return await self._call_method(
             "edit_permissions",
             chat,
@@ -625,8 +708,6 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """Edit administrator rights."""
-
         return await self._call_method(
             "edit_admin",
             chat,
@@ -640,8 +721,6 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """Ban a user from a group."""
-
         return await self.edit_permissions(
             chat,
             user,
@@ -655,8 +734,6 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """Unban a user from a group."""
-
         return await self.edit_permissions(
             chat,
             user,
@@ -670,8 +747,6 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """Restrict a user from sending messages."""
-
         return await self.edit_permissions(
             chat,
             user,
@@ -685,8 +760,6 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """Allow a user to send messages."""
-
         return await self.edit_permissions(
             chat,
             user,
@@ -700,8 +773,6 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """Promote a user to administrator."""
-
         return await self.edit_admin(
             chat,
             user,
@@ -714,8 +785,6 @@ class SelfClient:
         user,
         **kwargs
     ):
-        """Remove administrator privileges."""
-
         return await self.edit_admin(
             chat,
             user,
