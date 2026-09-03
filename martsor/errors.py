@@ -19,3 +19,11 @@ class APIError(MartsorError):
         self.status_code = status_code
         self.response = response
         self.retry_after = retry_after
+
+
+class AuthenticationError(MartsorError):
+    """Raised when authentication fails."""
+
+
+class AuthorizationError(MartsorError):
+    """Raised when authorization fails."""
