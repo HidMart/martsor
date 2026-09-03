@@ -1,5 +1,10 @@
 class Button:
-    """Represents an inline keyboard button."""
+    """
+    Martsor inline/glass button.
+
+    The button is converted to the native SPlusthon
+    button object when used with SelfClient.
+    """
 
     def __init__(
         self,
@@ -17,7 +22,50 @@ class Button:
             switch_inline_query_current_chat
         )
 
+    @classmethod
+    def inline(cls, text, data=None, callback_data=None):
+        """
+        Create an inline/glass callback button.
+
+        Example:
+            Button.inline("Click me", data="hello")
+        """
+
+        if callback_data is not None:
+            data = callback_data
+
+        return cls(
+            text=text,
+            callback_data=data,
+        )
+
+    @classmethod
+    def callback(cls, text, data=None):
+        """
+        Alias for Button.inline().
+        """
+
+        return cls.inline(
+            text,
+            data=data,
+        )
+
+    @classmethod
+    def url(cls, text, url):
+        """
+        Create an URL button.
+        """
+
+        return cls(
+            text=text,
+            url=url,
+        )
+
     def to_dict(self):
+        """
+        Convert the button to a dictionary.
+        """
+
         data = {
             "text": self.text,
         }
@@ -29,7 +77,9 @@ class Button:
             data["url"] = self.url
 
         if self.switch_inline_query is not None:
-            data["switch_inline_query"] = self.switch_inline_query
+            data["switch_inline_query"] = (
+                self.switch_inline_query
+            )
 
         if self.switch_inline_query_current_chat is not None:
             data["switch_inline_query_current_chat"] = (
@@ -38,30 +88,61 @@ class Button:
 
         return data
 
+    def __repr__(self):
+        return (
+            f"Button("
+            f"text={self.text!r}, "
+            f"callback_data={self.callback_data!r}, "
+            f"url={self.url!r}"
+            f")"
+        )
+
 
 class InlineKeyboard:
-    """Inline / glass keyboard."""
+    """
+    Inline / glass keyboard.
+    """
 
     def __init__(self, rows=None):
         self.rows = rows or []
 
     @staticmethod
-    def button(text, callback_data=None):
-        return Button(
-            text=text,
+    def button(
+        text,
+        callback_data=None,
+        data=None,
+    ):
+        if data is not None:
+            callback_data = data
+
+        return Button.inline(
+            text,
             callback_data=callback_data,
         )
 
     @staticmethod
+    def callback(
+        text,
+        data=None,
+    ):
+        return Button.inline(
+            text,
+            data=data,
+        )
+
+    @staticmethod
     def url(text, url):
-        return Button(
-            text=text,
-            url=url,
+        return Button.url(
+            text,
+            url,
         )
 
     def add_row(self, *buttons):
         self.rows.append(list(buttons))
         return self
+
+    def add(self, *buttons):
+        return self.add_row(*buttons)
 
     def to_dict(self):
         result = []
@@ -72,11 +153,14 @@ class InlineKeyboard:
             for button in row:
                 if isinstance(button, Button):
                     converted_row.append(button.to_dict())
+
                 elif isinstance(button, dict):
                     converted_row.append(button)
+
                 else:
                     raise TypeError(
-                        "Keyboard buttons must be Button or dict."
+                        "Keyboard buttons must be "
+                        "Button or dict."
                     )
 
             result.append(converted_row)
@@ -85,9 +169,19 @@ class InlineKeyboard:
             "inline_keyboard": result
         }
 
+    def __iter__(self):
+        return iter(self.rows)
+
+    def __repr__(self):
+        return (
+            f"InlineKeyboard(rows={self.rows!r})"
+        )
+
 
 class ReplyKeyboard:
-    """Reply keyboard."""
+    """
+    Reply keyboard.
+    """
 
     def __init__(
         self,
@@ -111,7 +205,9 @@ class ReplyKeyboard:
 
 
 class ReplyKeyboardRemove:
-    """Remove reply keyboard."""
+    """
+    Remove reply keyboard.
+    """
 
     def __init__(self, selective=False):
         self.selective = selective
@@ -124,7 +220,9 @@ class ReplyKeyboardRemove:
 
 
 class ForceReply:
-    """Force a reply from the user."""
+    """
+    Force a reply from the user.
+    """
 
     def __init__(self, selective=False):
         self.selective = selective
