@@ -1,17 +1,19 @@
 """
 Martsor
-Async Python framework for Soroush Plus.
+=======
 
-Version: 0.3.1
+Async Python library for Soroush Plus bots and user clients.
 """
 
-from .client import Bot, Client
+from .client import Client, Bot
+
 from .errors import (
     MartsorError,
     APIError,
     AuthenticationError,
-    HandlerError,
+    AuthorizationError,
 )
+
 from .keyboards import (
     Button,
     InlineKeyboard,
@@ -19,14 +21,17 @@ from .keyboards import (
     ReplyKeyboardRemove,
     ForceReply,
 )
-from .types import (
-    User,
-    Chat,
-    Message,
-    Update,
-)
 
-__version__ = "0.3.1"
+try:
+    from .types import (
+        User,
+        Chat,
+        Message,
+    )
+except ImportError:
+    User = None
+    Chat = None
+    Message = None
 
 try:
     from .self_client import SelfClient
@@ -34,10 +39,18 @@ except ImportError:
     SelfClient = None
 
 
+__version__ = "0.3.1"
+
+
 __all__ = [
-    "Bot",
     "Client",
+    "Bot",
     "SelfClient",
+
+    "MartsorError",
+    "APIError",
+    "AuthenticationError",
+    "AuthorizationError",
 
     "Button",
     "InlineKeyboard",
@@ -48,12 +61,6 @@ __all__ = [
     "User",
     "Chat",
     "Message",
-    "Update",
-
-    "MartsorError",
-    "APIError",
-    "AuthenticationError",
-    "HandlerError",
 
     "__version__",
 ]
